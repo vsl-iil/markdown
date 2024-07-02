@@ -285,7 +285,7 @@ sub _StripLinkDefinitions {
 						  [ \t]*
 						  \n?				# maybe *one* newline
 						  [ \t]*
-						<?(\S+?)>?			# url = $2
+						<?(http\S+?)>?			# url = $2
 						  [ \t]*
 						  \n?				# maybe one newline
 						  [ \t]*
@@ -428,7 +428,6 @@ sub _RunBlockGamut {
 	my $text = shift;
 
 	$text = _DoHeaders($text);
-
 	# Do Horizontal Rules:
 	$text =~ s{^[ ]{0,2}([ ]?\*[ ]?){3,}[ \t]*$}{\n<hr$g_empty_element_suffix\n}gmx;
 	$text =~ s{^[ ]{0,2}([ ]? -[ ]?){3,}[ \t]*$}{\n<hr$g_empty_element_suffix\n}gmx;
@@ -439,6 +438,7 @@ sub _RunBlockGamut {
 	$text = _DoCodeBlocks($text);
 
 	$text = _DoBlockQuotes($text);
+
 
 	# We already ran _HashHTMLBlocks() before, in Markdown(), but that
 	# was to escape raw HTML in the original Markdown source. This time,
@@ -460,6 +460,8 @@ sub _RunSpanGamut {
 	my $text = shift;
 
 	$text = _DoCodeSpans($text);
+
+  $text = _DoFootnotes($text);
 
 	$text = _EscapeSpecialChars($text);
 
@@ -714,6 +716,19 @@ sub _DoImages {
 	return $text;
 }
 
+sub _DoFootnotes {
+	my $text = shift;
+
+  $text =~ s{ ^\[\^([0-9]+)\]: (.*)(?:\n[ ]*)? }{
+    $1 . ": " . $2 . " <a href=\"#fn$1b\" id=\"fn$1\">↩ </a>";
+  }egmx;
+
+	$text =~ s{ \[\^([0-9]+)\] }{
+		"<a href=\"#fn$1\" id=\"fn$1b\"><sup>"  .  $1  .  "</sup></a>";
+	}egmx;
+
+	return $text;
+}
 
 sub _DoHeaders {
 	my $text = shift;
